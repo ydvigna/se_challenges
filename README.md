@@ -47,7 +47,7 @@ If any of these assumptions fails the program prints an error message and exits
 - print final positions
 
 ### Usage
-node .\challenge_yuri.js <filepath> [--verbose]  
+node .\challenge_yuri.js \<filepath\> [--verbose]  
 node .\challenge_yuri.js test.txt --verbose
 
 - 'filepath' is the input text file
