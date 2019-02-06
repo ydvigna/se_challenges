@@ -62,6 +62,6 @@ Open project folder in terminal and run the commands:
 `npm install --save-dev mocha`  
 `npm test`
 
-
+Test file 'test.js' must be inside folder 'test'.
 
 
