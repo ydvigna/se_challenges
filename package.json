@@ -1,0 +1,14 @@
+{
+  "name": "challenge",
+  "version": "1.0.0",
+  "description": "Software Engineer Practical Challenge",
+  "main": "challenge_yuri.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Yuri Del Vigna Yasuda",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^5.2.0"
+  }
+}
