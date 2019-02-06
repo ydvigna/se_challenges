@@ -9,7 +9,7 @@ const fs = require('fs');
 
 // Function to print example of expected input file
 function printExample() {
-  console.log("Input example (1 line for grid size and 2 lines per rover):");
+  console.log("\n Input example (1 line for grid size and 2 lines per rover):");
   console.log("5 5        (grid size)");
   console.log("1 2 N      (initial position of 1st rover)");
   console.log("LMLMLMLMM  (instructions for 1st rover)");
@@ -19,9 +19,11 @@ function printExample() {
 
 // Function to print the output (new positions of each rover)
 function printOutput(rovers_positions) {
+  var output = "";
   for (var i = 0; i < rovers_positions.length; i++) {
-    console.log(rovers_positions[i][0] + ' ' + rovers_positions[i][1] + ' ' + rovers_positions[i][2]);
+    output += rovers_positions[i][0] + ' ' + rovers_positions[i][1] + ' ' + rovers_positions[i][2] + '\n';
   }
+  return output.trim();
 }
 
 // Function to check if value is valid direction
@@ -49,7 +51,7 @@ function updatePosition(position, instruction) {
     }
   }
   else if (instruction === 'L') {
-    // turn rover 90 degrees left (anti-clockwise)
+    // turn rover 90 degrees left (counter-clockwise)
     switch(position[2]) {
       case 'N': position[2] = 'W'; break;
       case 'S': position[2] = 'E'; break;
@@ -88,45 +90,32 @@ function isPositionValid(rovers_positions, grid_size, rover) {
 }
 
 
-// check if verbose mode is selected
-var verbose = false;
-if (process.argv.length > 3 && process.argv[3] === "--verbose") {
-  verbose = true;
-  console.log("Verbose mode ON!");
-}
-
-// check if there is argument (filename)
-var input;
-if (process.argv.length > 2) {
-  input = process.argv[2];
-  if (verbose) console.log(" Reading file:", input);
-}
-else {
-  return console.log("ERROR! No file provided! Usage: node .\\challenge_yuri.js <filepath> [--verbose]");
-}
-
-// read file and split lines
-fs.readFile(input, 'utf8', function (err,data) {
-  if (err) {
-    return console.log(err);
-  }
+// Main function for computing new positions
+function computePositions(data, verbose) {
   data = data.split(/\r?\n/); // split the file into lines
   
   // check for empty lines
   for (const line of data) {
-    if (!line) return console.log("ERROR! File contains empty lines! Please remove them.");
+    if (!line) {
+      if (verbose) console.log("ERROR! File contains empty lines! Please remove them.");
+      return -1;
+    }
   }
 
   // check if number of lines are valid
   if (data.length < 3) {
-    console.log("ERROR! There must be instructions for at least one rover.");
-    printExample();
-    return;
+    if (verbose) {
+      console.log("ERROR! There must be instructions for at least one rover.");
+      printExample();
+    }
+    return -1;
   }
   if (data.length % 2 == 0) {
-    console.log("ERROR! Input instructions invalid. File should have an odd number of lines.");
-    printExample();
-    return;
+    if (verbose) {
+      console.log("ERROR! Input instructions invalid. File should have an odd number of lines.");
+      printExample();
+    }
+    return -1;
   }
 
   if (verbose) console.log(" Input data separated by lines:\n", data);
@@ -136,9 +125,11 @@ fs.readFile(input, 'utf8', function (err,data) {
   // check if grid size entered is valid
   if (grid_size.length != 2 || isNaN(parseInt(grid_size[0])) || isNaN(parseInt(grid_size[1])) || 
       parseInt(grid_size[0]) < 0 || parseInt(grid_size[1]) < 0) {
-    console.log("ERROR! Grid size invalid. It should be defined by 2 non-negative integers.");
-    printExample();
-    return;
+    if (verbose) {
+      console.log("ERROR! Grid size invalid. It should be defined by 2 non-negative numbers.");
+      printExample();
+    }
+    return -1;
   }
 
   grid_size[0] = parseInt(grid_size[0]) + 1; // x dimension of grid (+1 as it starts at 0)
@@ -150,12 +141,14 @@ fs.readFile(input, 'utf8', function (err,data) {
   var rover = 0;
   for (var i = 1; i < data.length; i+=2) {
     position = data[i].split(' '); // split line into values
-   
+  
     // check if initial rover position is parsable
     if (position.length != 3 || isNaN(parseInt(position[0])) || isNaN(parseInt(position[1])) || !isDirection(position[2])) {
-      console.log("ERROR! Rover position invalid. It should be defined by 2 integers and a direction (NSWE).");
-      printExample();
-      return;
+      if (verbose) {
+        console.log("ERROR! Rover position values invalid. It should be defined by 2 integers and a direction (NSWE).");
+        printExample();
+      }
+      return -1;
     }
 
     position[0] = parseInt(position[0]); // x coordinate
@@ -164,8 +157,8 @@ fs.readFile(input, 'utf8', function (err,data) {
 
     // check if initial rover position is valid
     if (!isPositionValid(rovers_positions, grid_size, rover)) {
-      console.log("ERROR! Initial position invalid. A rover cant be placed on an occupied spot nor outside the grid.");
-      return;
+      if (verbose) console.log("ERROR! Initial rover position invalid. A rover cant be placed on an occupied spot nor outside the grid.");
+      return -1;
     }
 
     rover++;
@@ -176,13 +169,15 @@ fs.readFile(input, 'utf8', function (err,data) {
   // compute new position for the rovers following sequence of instructions
   rover = 0;
   for (var i = 2; i < data.length; i+=2) {
-    if (verbose) console.log("Moving rover:", rover);
+    if (verbose) console.log("\nMoving rover:", rover);
     for (var j = 0; j < data[i].length; j++) {
       // check if instruction is valid
       if (!isInstruction(data[i].charAt(j))) {
-        console.log("ERROR! Instruction is invalid. It should be turn (LR) or move (M).");
-        printExample();
-        return;
+        if (verbose) {
+          console.log("ERROR! Instruction is invalid. It should be turn (LR) or move (M).");
+          printExample();
+        }
+        return -1;
       }
       
       // update position of rover according to the instruction
@@ -190,8 +185,8 @@ fs.readFile(input, 'utf8', function (err,data) {
       
       // check if new rover position is valid
       if (!isPositionValid(rovers_positions, grid_size, rover)) {
-        console.log("ERROR! New position is invalid. A rover cant move towards an occupied spot nor outside the grid.");
-        return;
+        if (verbose) console.log("ERROR! New position is invalid. A rover cant move towards an occupied spot nor outside the grid.");
+        return -1;
       }
       
       if (verbose) console.log("New position of rover", rover, "is [", rovers_positions[rover][0] + ' ' + rovers_positions[rover][1] + ' ' + 
@@ -202,8 +197,61 @@ fs.readFile(input, 'utf8', function (err,data) {
     rover++;
   }
 
-  if (verbose) console.log(" Final positions of rovers:");
-  printOutput(rovers_positions);
-});
+  if (verbose) console.log("\n Final positions of rovers:");
+  var output = printOutput(rovers_positions);
+  // console.log(output);
+  return output;
+}
 
 
+// check if verbose mode is selected
+var verbose = false;
+if (process.argv.length > 3 && process.argv[3] === "--verbose") {
+  verbose = true;
+  console.log("Verbose mode ON!");
+}
+
+// check if there is argument (filename)
+var input;
+if (process.argv.length > 2) {
+  input = process.argv[2];
+  
+  if (verbose) console.log(" Reading file:", input);
+
+  // read file synchronously
+  var data = fs.readFileSync(input, 'utf8');
+  
+  // check if file is empty
+  if (!data) {
+    console.log("ERROR! File is empty. Make sure the file contains the correct data.");
+    printExample();
+    process.exitCode = 1;
+  }
+  else {
+    // compute new positions of robots
+    var output = computePositions(data, verbose);
+    if (output == -1) {
+      if (!verbose) {
+        console.log("ERROR! Something wrong happened while computing positions.");
+        console.log("Make sure the input file follows the recommendations or activate verbose mode for more info.");
+        printExample();
+      }
+      process.exitCode = 1;
+    }
+    else {
+      console.log(output);
+    }
+  }
+}
+else {
+  console.log("ERROR! No file provided! Usage: node .\\challenge_yuri.js <filepath> [--verbose]");
+  console.log(" (Ignore error message if running automated tests!)");
+
+  exports.isDirection = isDirection;
+  exports.isInstruction = isInstruction;
+  exports.updatePosition = updatePosition;
+  exports.isPositionValid = isPositionValid;
+  exports.computePositions = computePositions;
+
+  process.exitCode = 1;
+}
