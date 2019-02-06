@@ -50,7 +50,8 @@ If any of these assumptions fails the program prints an error message and exits
 ### Usage
 `node challenge_yuri.js filepath [--verbose]`  
 
-Example:  
+Examples:  
+`node challenge_yuri.js test.txt`  
 `node challenge_yuri.js test.txt --verbose`
 
 - 'filepath' is the input text file
